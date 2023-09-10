@@ -42,7 +42,7 @@ class AgendasTable extends Table
         parent::initialize($config);
 
         $this->setTable('agendas');
-        $this->setDisplayField('id');
+        $this->setDisplayField('eventdescription');
         $this->setPrimaryKey('id');
 
         $this->addBehavior('Timestamp');

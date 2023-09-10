@@ -69,6 +69,10 @@ class SubscriptionsTable extends Table
             'foreignKey' => 'subscription_id',
         ]);
 
+        $this->hasMany('Singlesubscriptions', [
+            'foreignKey' => 'subscription_id',
+        ]);
+
         $this->belongsTo('Subscriptionstypes', [
             'foreignKey' => 'subscriptionstype_id',
         ]);

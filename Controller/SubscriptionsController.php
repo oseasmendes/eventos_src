@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 use Cake\Mailer\MailerAwareTrait;
 use Cake\Core\Configure;
-
+use Cake\Validation\Validator;
 /**
  * Subscriptions Controller
  *
@@ -13,8 +13,12 @@ use Cake\Core\Configure;
  */
 class SubscriptionsController extends AppController
 {
+
+   
+
     public function initialize(): void
     {
+   
         parent::initialize();
      //   $this->viewBuilder()->setLayout("admin");
      //   $this->loadComponent('Peoplescontacts');
@@ -24,7 +28,6 @@ class SubscriptionsController extends AppController
           $this->loadComponent('Rlevent');
           $this->loadComponent('Peopl');
           $this->loadComponent('Staff');    
-          
 
     }
 
@@ -151,16 +154,7 @@ class SubscriptionsController extends AppController
      */
     public function add()
     {
-        $userid = $this->request
-        ->getAttribute('identity')
-        ->getIdentifier();
-
-
-        $roleid = $this->request
-        ->getAttribute('identity')
-        ->get('role_id');
-
-        if ($roleid == 1) {
+       
                 $subscription = $this->Subscriptions->newEmptyEntity();
                 if ($this->request->is('post')) {
                     $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
@@ -176,9 +170,7 @@ class SubscriptionsController extends AppController
                 $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
                 $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes'));
 
-        } else {
-                return $this->redirect(['controller'=>'Users','action' => 'refuse']);
-        }
+      
     }
 
     use MailerAwareTrait;
@@ -508,66 +500,62 @@ class SubscriptionsController extends AppController
     public function edit($id = null)
     {
   
-    $userid = $this->request
-    ->getAttribute('identity')
-    ->getIdentifier();
+          
+        $roleid = $this->request
+        ->getAttribute('identity')
+        ->get('role_id');
 
+        $profileid = $this->request
+        ->getAttribute('identity')        
+        ->get('profile_id'); 
 
-    $roleid = $this->request
-    ->getAttribute('identity')
-    ->get('role_id');
+        $userid = $this->request
+        ->getAttribute('identity')        
+        ->get('id'); 
+        
+        $useractive = $this->request
+        ->getAttribute('identity')        
+        ->get('active'); 
 
-    if ($roleid == 1) {
-
-        $subscription = $this->Subscriptions->get($id, [
-            'contain' => [],
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
-            $roleventid = $subscription->rolevent_id; 
-            if ($this->Subscriptions->save($subscription)) {
-                $this->Flash->success(__('The subscription has been saved.'));
-
-                //return $this->redirect(['action' => 'index']);
-                return $this->redirect(['controller'=>'rolevents','action' => 'view', $roleventid]);
-            }
-            $this->Flash->error(__('The subscription could not be saved. Please, try again.'));
-        }
-        $rolevents = $this->Subscriptions->Rolevents->find('list', ['limit' => 200]);
-        $subscriptionstypes = $this->Subscriptions->Subscriptionstypes->find('list', ['limit' => 200]);
-        $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
-        $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes'));
-    
-    } else {
-
-        $subscription = $this->Subscriptions->get($id, [
-            'contain' => [],
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
-            $roleventid = $subscription->rolevent_id; 
-            
-            if ($userid == $subscription->user_id) {
-                        if ($this->Subscriptions->save($subscription)) {
-                            $this->Flash->success(__('The subscription has been saved.'));
-
-                            //return $this->redirect(['action' => 'index']);
-                            return $this->redirect(['controller'=>'rolevents','action' => 'view', $roleventid]);
-                        }
-                        $this->Flash->error(__('The subscription could not be saved. Please, try again.'));
-                    } else {
-                        $this->Flash->error(__('The subscription could not be saved. User not equal from subscription.'));
-
-                        return $this->redirect(['controller'=>'Users','action' => 'refuse']);
-                    }
-        }
-        $rolevents = $this->Subscriptions->Rolevents->find('list', ['limit' => 200]);
-        $subscriptionstypes = $this->Subscriptions->Subscriptionstypes->find('list', ['limit' => 200]);
-        $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
-        $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes'));
-     
+        $confirmed = $this->request
+        ->getAttribute('identity')
+        ->get('confirmed');
+        
+        $ctrl = Configure::read('ctrl._subscriptions');
+        $act = Configure::read('act._edit');
+        $ok = Configure::read('answ.alw');
+        
        
-    }
+
+        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);
+        //var_dump($allprof->value);
+                 
+        if (($allprof->value == $ok) && ($useractive == true) && ($confirmed == true)) {
+
+                            $subscription = $this->Subscriptions->get($id, [
+                                'contain' => [],
+                            ]);
+                            if ($this->request->is(['patch', 'post', 'put'])) {
+                                $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
+                                $roleventid = $subscription->rolevent_id; 
+                                if ($this->Subscriptions->save($subscription)) {
+                                    $this->Flash->success(__('The subscription has been saved.'));
+
+                                    //return $this->redirect(['action' => 'index']);
+                                    return $this->redirect(['controller'=>'rolevents','action' => 'view', $roleventid]);
+                                }
+                                $this->Flash->error(__('The subscription could not be saved. Please, try again.'));
+                            }
+                            $rolevents = $this->Subscriptions->Rolevents->find('list', ['limit' => 200]);
+                            $subscriptionstypes = $this->Subscriptions->Subscriptionstypes->find('list', ['limit' => 200]);
+                            $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
+                            $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes'));
+                        
+                        } else {
+                            $this->Flash->error(__('Inscrição não pode ser alterada.'));
+                            return $this->redirect(['action' => 'view', $id]);
+                            
+                        }               
 
     
     }

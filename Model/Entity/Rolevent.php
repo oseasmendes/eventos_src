@@ -60,6 +60,7 @@ class Rolevent extends Entity
         'roleventfiles' => true,
         'roleventschannels' => true,
         'roleventsimgs' => true,
+        'singlesubscriptions' => true,
         'subscriptions' => true,
     ];
 }

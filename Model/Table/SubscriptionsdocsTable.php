@@ -74,6 +74,11 @@ class SubscriptionsdocsTable extends Table
             ->allowEmptyString('description');
 
         $validator
+            ->scalar('historic')
+            ->maxLength('historic', 4294967295)
+            ->allowEmptyString('historic');    
+
+        $validator
             ->scalar('filename')
             ->maxLength('filename', 250)
             ->allowEmptyFile('filename');

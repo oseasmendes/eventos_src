@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Controller;
+use Cake\Core\Configure;
 
 /**
  * Orgs Controller
@@ -11,6 +12,19 @@ namespace App\Controller;
  */
 class OrgsController extends AppController
 {
+
+    public function initialize(): void
+    {
+        parent::initialize();
+     //   $this->viewBuilder()->setLayout("admin");
+     //   $this->loadComponent('Peoplescontacts');
+          //$this->loadComponent('Paginator');
+          $this->loadComponent('Usr');          
+          $this->loadComponent('Staff');    
+          
+
+    }
+
     /**
      * Index method
      *
@@ -53,17 +67,58 @@ class OrgsController extends AppController
      */
     public function add()
     {
-        $org = $this->Orgs->newEmptyEntity();
-        if ($this->request->is('post')) {
-            $org = $this->Orgs->patchEntity($org, $this->request->getData());
-            if ($this->Orgs->save($org)) {
-                $this->Flash->success(__('The org has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('The org could not be saved. Please, try again.'));
+        $roleid = $this->request
+        ->getAttribute('identity')
+        ->get('role_id');
+
+        $profileid = $this->request
+        ->getAttribute('identity')        
+        ->get('profile_id'); 
+
+        $confirmed = $this->request
+        ->getAttribute('identity')        
+        ->get('confirmed'); 
+        
+        $useractive = $this->request
+        ->getAttribute('identity')        
+        ->get('active'); 
+
+        $userid = $this->request
+        ->getAttribute('identity')        
+        ->get('id'); 
+        
+        $ctrl = Configure::read('ctrl._orgs');
+        $act = Configure::read('act._add');
+        $ok = Configure::read('answ.alw');
+
+            
+        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);   
+
+        if (!is_null($allprof)) {                      
+                               
+            if (($profileid == 10) && ($roleid == 1)) {
+
+                $org = $this->Orgs->newEmptyEntity();
+                if ($this->request->is('post')) {
+                    $org = $this->Orgs->patchEntity($org, $this->request->getData());
+                    if ($this->Orgs->save($org)) {
+                        $this->Flash->success(__('The org has been saved.'));
+
+                        return $this->redirect(['action' => 'index']);
+                    }
+                    $this->Flash->error(__('The org could not be saved. Please, try again.'));
+                }
+                $this->set(compact('org'));
+
+            } else {
+                $this->Flash->error(__('Acesso não autorizado.'));
+                return $this->redirect(['controller'=>'News','action' => 'home']);                        
+            }                                            
+        } else {
+            $this->Flash->error(__('Acesso Negado.'));
+            return $this->redirect(['controller'=>'News','action' => 'home']);                        
         }
-        $this->set(compact('org'));
     }
 
     /**
@@ -75,19 +130,61 @@ class OrgsController extends AppController
      */
     public function edit($id = null)
     {
-        $org = $this->Orgs->get($id, [
-            'contain' => [],
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $org = $this->Orgs->patchEntity($org, $this->request->getData());
-            if ($this->Orgs->save($org)) {
-                $this->Flash->success(__('The org has been saved.'));
 
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('The org could not be saved. Please, try again.'));
+        $roleid = $this->request
+        ->getAttribute('identity')
+        ->get('role_id');
+
+        $profileid = $this->request
+        ->getAttribute('identity')        
+        ->get('profile_id'); 
+
+        $confirmed = $this->request
+        ->getAttribute('identity')        
+        ->get('confirmed'); 
+        
+        $useractive = $this->request
+        ->getAttribute('identity')        
+        ->get('active'); 
+
+        $userid = $this->request
+        ->getAttribute('identity')        
+        ->get('id'); 
+        
+        $ctrl = Configure::read('ctrl._orgs');
+        $act = Configure::read('act._edit');
+        $ok = Configure::read('answ.alw');
+
+            
+        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);   
+
+        if (!is_null($allprof)) {                      
+                               
+            if (($profileid == 10) && ($roleid == 1)) {
+
+                        $org = $this->Orgs->get($id, [
+                            'contain' => [],
+                        ]);
+                        if ($this->request->is(['patch', 'post', 'put'])) {
+                            $org = $this->Orgs->patchEntity($org, $this->request->getData());
+                            if ($this->Orgs->save($org)) {
+                                $this->Flash->success(__('The org has been saved.'));
+
+                                return $this->redirect(['action' => 'index']);
+                            }
+                            $this->Flash->error(__('The org could not be saved. Please, try again.'));
+                        }
+                        $this->set(compact('org'));
+
+            } else {
+                        $this->Flash->error(__('Acesso não autorizado.'));
+                        return $this->redirect(['action' => 'view', $id]);                        
+            }                                            
+        } else {
+                    $this->Flash->error(__('Acesso Negado.'));
+                    return $this->redirect(['action' => 'view', $id]);                        
+                    
         }
-        $this->set(compact('org'));
     }
 
     /**
@@ -99,14 +196,54 @@ class OrgsController extends AppController
      */
     public function delete($id = null)
     {
-        $this->request->allowMethod(['post', 'delete']);
-        $org = $this->Orgs->get($id);
-        if ($this->Orgs->delete($org)) {
-            $this->Flash->success(__('The org has been deleted.'));
-        } else {
-            $this->Flash->error(__('The org could not be deleted. Please, try again.'));
-        }
+        $roleid = $this->request
+        ->getAttribute('identity')
+        ->get('role_id');
 
-        return $this->redirect(['action' => 'index']);
+        $profileid = $this->request
+        ->getAttribute('identity')        
+        ->get('profile_id'); 
+
+        $confirmed = $this->request
+        ->getAttribute('identity')        
+        ->get('confirmed'); 
+        
+        $useractive = $this->request
+        ->getAttribute('identity')        
+        ->get('active'); 
+
+        $userid = $this->request
+        ->getAttribute('identity')        
+        ->get('id'); 
+        
+        $ctrl = Configure::read('ctrl._orgs');
+        $act = Configure::read('act._delete');
+        $ok = Configure::read('answ.alw');
+
+            
+        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);   
+
+        if (!is_null($allprof)) {                      
+                               
+            if (($profileid == 10) && ($roleid == 1)) {
+
+                    $this->request->allowMethod(['post', 'delete']);
+                    $org = $this->Orgs->get($id);
+                    if ($this->Orgs->delete($org)) {
+                        $this->Flash->success(__('The org has been deleted.'));
+                    } else {
+                        $this->Flash->error(__('The org could not be deleted. Please, try again.'));
+                    }
+
+                    return $this->redirect(['action' => 'index']);
+
+            } else {
+                    $this->Flash->error(__('Acesso não autorizado.'));
+                    return $this->redirect(['action' => 'view', $id]);                        
+            }                                            
+        } else {
+                $this->Flash->error(__('Acesso Negado.'));
+                return $this->redirect(['action' => 'view', $id]);                                        
+        }
     }
 }

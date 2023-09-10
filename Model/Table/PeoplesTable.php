@@ -78,6 +78,11 @@ class PeoplesTable extends Table
         $this->hasMany('Subscriptions', [
             'foreignKey' => 'people_id',
         ]);
+
+        $this->hasMany('Singlesubscriptions', [
+            'foreignKey' => 'people_id',
+        ]);
+        
     }
 
     /**

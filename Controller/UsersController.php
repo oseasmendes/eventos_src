@@ -16,6 +16,14 @@ use Cake\Validation\Validator;
  */
 class UsersController extends AppController
 {
+    public function beforeFilter(\Cake\Event\EventInterface $event)
+    {
+        parent::beforeFilter($event);
+        // Configure the login action to not require authentication, preventing
+        // the infinite redirect loop issue
+        $this->Authentication->allowUnauthenticated(['login','add','home','redefinepassword','accountconfirmation','emailconfirmation']);
+    }
+
     public function initialize(): void
     {
         parent::initialize();
@@ -246,13 +254,21 @@ class UsersController extends AppController
         ]);
 
         if ($this->request->getQueryParams([ 'h']) and $this->request->getQueryParams([ 'email'])) {
-
-            if ($user = $this->Usr->findUsermail($keyword['email']))   {
-
-                if($hash == $user->password) {
+            var_dump($keyword['email']);
+           
+            if ($userValid = $this->Usr->findUsermail($keyword['email']))   {
+               
+                if($hash == $userValid->password) {
 
                     if ($this->request->is(['patch', 'post', 'put'])) {
                         $user = $this->Users->patchEntity($user, $this->request->getData());
+                        //var_dump($user);
+                        $user->username = $userValid->username;
+                        $user->docnumber = $userValid->docnumber;
+                        $user->confirmed = 1;
+                        $user->confirmeddate = date("Y-m-d H:i:s"); 
+                        $user->active = 1; 
+
                         if ($this->Users->save($user)) {
                             $this->Flash->success(__('The user has been saved.'));
             
@@ -349,6 +365,7 @@ class UsersController extends AppController
         $this->request->allowMethod(['get', 'post']);
         $result = $this->Authentication->getResult();
         // regardless of POST or GET, redirect if user is logged in
+        //var_dump($result);
         if ($result->isValid()) {
             return $this->redirect(['controller'=> 'News','action'=>'home']);
         }
@@ -356,6 +373,17 @@ class UsersController extends AppController
         if ($this->request->is('post') && !$result->isValid()) {
             $this->Flash->error(__('Invalid username or password'));
         }
+
+    /*    $result = $this->Authentication->getResult();
+    // If the user is logged in send them away.
+    if ($result->isValid()) {
+        //$target = $this->Authentication->getLoginRedirect() ?? '/home';
+        return $this->redirect(['controller'=> 'News','action'=>'home']);
+        //return $this->redirect($target);
+    }
+    if ($this->request->is('post')) {
+        $this->Flash->error('Invalid username or password');
+    }*/
     }
 
     public function logout()
@@ -366,6 +394,7 @@ class UsersController extends AppController
             $this->Authentication->logout();
             return $this->redirect(['controller' => 'News', 'action' => 'home']);
         }
+        
     }
 
     public function refuse()

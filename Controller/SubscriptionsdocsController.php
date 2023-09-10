@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Controller;
+use Cake\Core\Configure;
 
 /**
  * Subscriptionsdocs Controller
@@ -20,7 +21,7 @@ class SubscriptionsdocsController extends AppController
         $this->loadComponent('Peopl');
         $this->loadComponent('Rlevent');       
         $this->loadComponent('Usr');       
-        
+        $this->loadComponent('Staff');    
 
     }
 
@@ -67,11 +68,15 @@ class SubscriptionsdocsController extends AppController
      */
     public function view($id = null)
     {
+
+
         $subscriptionsdoc = $this->Subscriptionsdocs->get($id, [
             'contain' => ['Subscriptions', 'Doctypes'],
         ]);
 
         $this->set(compact('subscriptionsdoc'));
+
+
     }
 
     /**
@@ -165,21 +170,82 @@ class SubscriptionsdocsController extends AppController
      */
     public function edit($id = null)
     {
-        $subscriptionsdoc = $this->Subscriptionsdocs->get($id, [
-            'contain' => [],
-        ]);
-        if ($this->request->is(['patch', 'post', 'put'])) {
-            $subscriptionsdoc = $this->Subscriptionsdocs->patchEntity($subscriptionsdoc, $this->request->getData());
-            if ($this->Subscriptionsdocs->save($subscriptionsdoc)) {
-                $this->Flash->success(__('The subscriptionsdoc has been saved.'));
+        $userid = $this->request
+        ->getAttribute('identity')
+        ->getIdentifier();
 
-                return $this->redirect(['action' => 'index']);
-            }
-            $this->Flash->error(__('The subscriptionsdoc could not be saved. Please, try again.'));
-        }
-        $subscriptions = $this->Subscriptionsdocs->Subscriptions->find('list', ['limit' => 200]);
-        $doctypes = $this->Subscriptionsdocs->Doctypes->find('list', ['limit' => 200]);
-        $this->set(compact('subscriptionsdoc', 'subscriptions', 'doctypes'));
+        $roleid = $this->request
+        ->getAttribute('identity')
+        ->get('role_id');
+
+        $profileid = $this->request
+        ->getAttribute('identity')        
+        ->get('profile_id'); 
+
+        $userid = $this->request
+        ->getAttribute('identity')        
+        ->get('id'); 
+        
+        $useractive = $this->request
+        ->getAttribute('identity')        
+        ->get('active'); 
+
+        $confirmed = $this->request
+        ->getAttribute('identity')
+        ->get('confirmed');
+        
+        $ctrl = Configure::read('ctrl._subscriptionsdocs');
+        $act = Configure::read('act._edit');
+        $ok = Configure::read('answ.alw');
+
+
+        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);
+        //var_dump($allprof->value);
+                 
+                    if (($allprof->value == $ok) && ($useractive == true) && ($confirmed == true)) {
+
+                            if (($roleid != 3) && ($roleid != 6)) {
+
+                                    $subscriptionsdoc = $this->Subscriptionsdocs->get($id, [
+                                        'contain' => [],
+                                    ]);
+                                    if ($this->request->is(['patch', 'post', 'put'])) {
+                                        $subscriptionsdoc = $this->Subscriptionsdocs->patchEntity($subscriptionsdoc, $this->request->getData());
+                                        if ($this->Subscriptionsdocs->save($subscriptionsdoc)) {
+                                            $this->Flash->success(__('The subscriptionsdoc has been saved.'));
+
+                                            return $this->redirect(['action' => 'index']);
+                                        }
+                                        $this->Flash->error(__('The subscriptionsdoc could not be saved. Please, try again.'));
+                                    }
+                                    $subscriptions = $this->Subscriptionsdocs->Subscriptions->find('list', ['limit' => 200]);
+                                    $doctypes = $this->Subscriptionsdocs->Doctypes->find('list', ['limit' => 200]);
+                                    $this->set(compact('subscriptionsdoc', 'subscriptions', 'doctypes'));
+                            } else {
+
+                                $subscriptionsdoc = $this->Subscriptionsdocs->get($id, [
+                                    'contain' => [],
+                                ]);
+                                if ($this->request->is(['patch', 'post', 'put'])) {
+                                    $subscriptionsdoc = $this->Subscriptionsdocs->patchEntity($subscriptionsdoc, $this->request->getData());
+                                    if ($this->Subscriptionsdocs->save($subscriptionsdoc)) {
+                                        $this->Flash->success(__('The subscriptionsdoc has been saved.'));
+
+                                        return $this->redirect(['action' => 'index']);
+                                    }
+                                    $this->Flash->error(__('The subscriptionsdoc could not be saved. Please, try again.'));
+                                }
+                                $subscriptions = $this->Subscriptionsdocs->Subscriptions->find('list', array('conditions'=>array('Subscriptions.user_id'=>$userid)));
+                                $doctypes = $this->Subscriptionsdocs->Doctypes->find('list', ['limit' => 200]);
+                                $this->set(compact('subscriptionsdoc', 'subscriptions', 'doctypes'));
+                            }
+
+
+                } else {
+                    $this->Flash->error(__('Dados de comprovante não podem ser alterados.'));
+                    return $this->redirect(['action' => 'view', $id]);
+                    
+                }       
     }
 
     /**

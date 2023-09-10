@@ -27,8 +27,8 @@ class PeoplesController extends AppController
         
         // $ctrl = '7307135';
 
-         $this->viewBuilder()->setLayout("admin");      
-
+        // $this->viewBuilder()->setLayout("admin");      
+       // $this->viewBuilder()->setLayout('news');
         
          
     }    
@@ -196,20 +196,19 @@ class PeoplesController extends AppController
        ->get('id');
        
        $ctrl = Configure::read('ctrl._peoples');
-       $act = Configure::read('act._viewsub');
+       $act = Configure::read('act._view');
        $ok = Configure::read('answ.alw');
-       
+        
       
 
        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);
 
-
+      if (!empty($allprof)) {
         
        if (($allprof->value == $ok) && ($useractive == true) && ($confirmed == true)) {
       
     
-        if (($roleid != 3) && ($roleid != 6)) {
-
+      
                 $people = $this->Peoples->get($id, [
                     'contain' => [
                             'Bussinessunits', 
@@ -223,19 +222,16 @@ class PeoplesController extends AppController
                 ]);
 
                 $this->set(compact('people'));
-                        } else {
-                            
-                            return $this->redirect(['controller'=>'Users','action' => 'refuse']);
-                        
-                        }
-
+                      
 
             } else {
 
             return $this->redirect(['controller'=>'Users','action' => 'refuse']);
 
             }        
-
+        } else {
+            $this->Flash->error(__('Acesso não autorizado. Fale com o Administrador'));
+        }
     }
 
 
@@ -272,7 +268,7 @@ class PeoplesController extends AppController
 
         $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);
 
-
+if (!empty($allprof)) {
          
         if (($allprof->value == $ok) && ($useractive == true) && ($confirmed == true)) {
        
@@ -311,7 +307,11 @@ class PeoplesController extends AppController
                 
                 return $this->redirect(['controller'=>'Users','action' => 'refuse']);
                
-            }        
+            }      
+        } else {
+            $this->Flash->error(__('Página não autorizada pela administração'));
+            return $this->redirect(['controller'=>'Users','action' => 'refuse']);
+        }  
     }
 
 

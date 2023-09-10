@@ -75,6 +75,10 @@ class RoleventsTable extends Table
         $this->hasMany('Subscriptions', [
             'foreignKey' => 'rolevent_id',
         ]);
+
+        $this->hasMany('Singlesubscriptions', [
+            'foreignKey' => 'rolevent_id',
+        ]);
     }
 
     /**

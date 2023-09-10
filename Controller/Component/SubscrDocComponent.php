@@ -54,6 +54,8 @@ class SubscrDocComponent extends Component
 					$article->filepath = $targetPath;
 					$article->filename = $name;
 					$article->doctype_id = $doctype;
+					$article->statusflag = "ENVIADO";
+					$article->activeflag = 1;
 					//$article->rolevent_id = $galeria;
 								//var_dump($filename);
 					$article->subscription_id = $galeria;

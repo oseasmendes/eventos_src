@@ -100,6 +100,7 @@ class People extends Entity
         'created' => true,
         'modified' => true,
         'bussinessunit' => true,
+        'singlesubscriptions' => true,
         'subscriptions' => true,
         'position' => true,
         'district' => true,

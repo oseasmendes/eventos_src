@@ -24,18 +24,19 @@ use Cake\Error\Middleware\ErrorHandlerMiddleware;
 use Cake\Http\BaseApplication;
 use Cake\Http\Middleware\BodyParserMiddleware;
 use Cake\Http\Middleware\CsrfProtectionMiddleware;
-//use Cake\Http\MiddlewareQueue;
+use Cake\Http\Middleware\EncryptedCookieMiddleware;
+use Cake\Http\MiddlewareQueue;
 use Cake\ORM\Locator\TableLocator;
 use Cake\Routing\Middleware\AssetMiddleware;
 use Cake\Routing\Middleware\RoutingMiddleware;
-
+use Cake\I18n\Time;
 // In src/Application.php add the following imports
 use Authentication\AuthenticationService;
 use Authentication\AuthenticationServiceInterface;
 use Authentication\AuthenticationServiceProviderInterface;
 use Authentication\Identifier\IdentifierInterface;
 use Authentication\Middleware\AuthenticationMiddleware;
-use Cake\Http\MiddlewareQueue;
+//use Cake\Http\MiddlewareQueue;
 use Cake\Routing\Router;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -75,6 +76,8 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
         }
 
         // Load more plugins here
+
+        $this->addPlugin('Authentication');
     }
 
     /**
@@ -93,7 +96,12 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
 
         // Add the AuthenticationMiddleware. It should be
         // after routing and body parser.
+   //     ->add(new EncryptedCookieMiddleware(
+   //         ['CookieAuth'],
+   //         Configure::read('Security.cookieKey')
+   //         ))
         ->add(new AuthenticationMiddleware($this));
+        
 
     return $middlewareQueue;
 
@@ -120,6 +128,13 @@ class Application extends BaseApplication implements AuthenticationServiceProvid
     ];
     // Load the authenticators. Session should be first.
     $service->loadAuthenticator('Authentication.Session');
+
+    // If the user is on the login page, check for a cookie as well.
+    $service->loadAuthenticator('Authentication.Cookie', [
+        'fields' => $fields,    
+   
+    ]);
+
     $service->loadAuthenticator('Authentication.Form', [
         'fields' => $fields,
         'loginUrl' => Router::url([

@@ -59,6 +59,7 @@ class Bussinessunit extends Entity
         'general' => true,
         'org' => true,
         'peoples' => true,
+        'singlesubscriptions' => true,
         'rolevent' => true,
     ];
 }

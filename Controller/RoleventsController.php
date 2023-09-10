@@ -13,6 +13,16 @@ use Cake\I18n\FrozenTime;
  */
 class RoleventsController extends AppController
 {
+
+    public function beforeFilter(\Cake\Event\EventInterface $event)
+    {
+        parent::beforeFilter($event);
+        // Configure the login action to not require authentication, preventing
+        // the infinite redirect loop issue
+        $this->Authentication->allowUnauthenticated(['viewfree']);
+       
+
+    }
     /**
      * Index method
      *
@@ -20,7 +30,8 @@ class RoleventsController extends AppController
      */
     public function initialize(): void
     {
-         parent::initialize();    
+         parent::initialize();   
+         $this->viewBuilder()->setLayout("newslight"); 
          $this->loadComponent('Staff'); 
          
     }    
@@ -54,7 +65,7 @@ class RoleventsController extends AppController
         ->get('id'); 
         
         $ctrl = Configure::read('ctrl._rolevents');
-        $act = Configure::read('act._view');
+        $act = Configure::read('act._index');
         $ok = Configure::read('answ.alw');
 
             
@@ -64,46 +75,105 @@ class RoleventsController extends AppController
 
         // --- falta fazer os IFs --- parei aqui 20/06
 
-        if (!is_null($allprof)) {                      
-                               
-                if (($profileid == 10) && ($roleid == 1)) {
+      
+                    if (!is_null($allprof)) {                      
+                                        
+                            if (($profileid == 10) && ($roleid == 1)) {
+                                if (!empty($keyword['description'])) {             
+                                        $this->paginate = [
+                                            'contain' => ['Bussinessunits'],
+                                            'conditions' => [
+                                                'Rolevents.description LIKE'=> '%'.$keyword['description'].'%',
+                                                ],             
+                                            'order' => [                        
+                                            'Rolevents.description' => 'asc'
+                                                ]            
+                                            ];
+                                            
+                                        $rolevents = $this->paginate($this->Rolevents);
+                                        } elseif(!empty($keyword['bussinessunit_id'])) {    
+                                                        
+                                            $this->paginate = [ 
+                                            'contain' => ['Bussinessunits'],                       
+                                            'conditions' => [
+                                                    'Rolevents.bussinessunit_id ='=> $keyword['bussinessunit_id'],
+                                                    'Rolevents.activeflag'=> true,
+                                                    'Rolevents.enddate >'=> FrozenTime::now()
+                                                    ],             
+                                            'order' => ['Rolevents.description' => 'asc']            
+                                        ];
+                                        $rolevents = $this->paginate($this->Rolevents);          
 
-                    $this->paginate = [
-                        'contain' => ['Bussinessunits'],
-                        'order' => [                        
-                         'Rolevents.description' => 'asc'
-                            ]            
-                        ];
-                        
-                    $rolevents = $this->paginate($this->Rolevents);
+                                        } else {
+                                            $this->paginate = [
+                                                'contain' => ['Bussinessunits'],
+                                                'order' => [                        
+                                                'Rolevents.description' => 'asc'
+                                                    ]            
+                                                ];
+                                                
+                                            $rolevents = $this->paginate($this->Rolevents);
+                                }
 
-                    $this->set(compact('rolevents','bussinessunits'));
 
-                } else {
-                    
-                    if (($allprof->value == $ok) && ($useractive) && ($confirmed)) {
-                        $this->paginate = [ 
-                            'contain' => ['Bussinessunits'],                       
-                            'conditions' => ['Rolevents.activeflag'=> true,'Rolevents.enddate >'=> FrozenTime::now()],             
-                            'order' => ['Rolevents.description' => 'asc']            
-                        ];
+                                $this->set(compact('rolevents','bussinessunits'));
 
-                       
-                        $rolevents = $this->paginate($this->Rolevents);
-    
-                        $this->set(compact('rolevents','bussinessunits'));
-                    } else {
-                        return $this->redirect(['controller'=>'Users','action' => 'refuse']);    
-                    }
-                }
+                            } else {
+                                if (($allprof->value == $ok) && ($useractive) && ($confirmed)) {
+                                                if (!empty($keyword['description'])) {             
+                                                                                
+                                                    $this->paginate = [ 
+                                                        'contain' => ['Bussinessunits'],                       
+                                                        'conditions' => [
+                                                                'Rolevents.description LIKE'=> '%'.$keyword['description'].'%',
+                                                                'Rolevents.activeflag'=> true,
+                                                                'Rolevents.enddate >'=> FrozenTime::now()
+                                                                ],             
+                                                        'order' => ['Rolevents.description' => 'asc']            
+                                                    ];
+                                                    $rolevents = $this->paginate($this->Rolevents);  
+                                                
+                                                } elseif(!empty($keyword['bussinessunit_id'])) {    
+                                                    
+                                                        $this->paginate = [ 
+                                                        'contain' => ['Bussinessunits'],                       
+                                                        'conditions' => [
+                                                                'Rolevents.bussinessunit_id ='=> $keyword['bussinessunit_id'],
+                                                                'Rolevents.activeflag'=> true,
+                                                                'Rolevents.enddate >'=> FrozenTime::now()
+                                                                ],             
+                                                        'order' => ['Rolevents.description' => 'asc']            
+                                                    ];
+                                                    $rolevents = $this->paginate($this->Rolevents);  
+
+                                                } else {
+
+                                                    $this->paginate = [ 
+                                                        'contain' => ['Bussinessunits'],                       
+                                                        'conditions' => [                                    
+                                                                'Rolevents.activeflag'=> true,
+                                                                'Rolevents.enddate >'=> FrozenTime::now()
+                                                                ],             
+                                                        'order' => ['Rolevents.description' => 'asc']            
+                                                    ];
+
+                                                    $rolevents = $this->paginate($this->Rolevents);                                
+                                                }
+                                                $this->set(compact('rolevents','bussinessunits'));
+                                } else {
+                                    $this->Flash->error(__('Acesso não autorizado.'));
+                                    return $this->redirect(['controller'=>'News','action' => 'home']);    
+                                }
+                            
+                            }
+                        } else {
                                 
-            } else {
-                    
-                    return $this->redirect(['controller'=>'Users','action' => 'refuse']);
-                    
-            }
+                            $this->Flash->error(__('Acesso Negado.'));
+                            return $this->redirect(['controller'=>'News','action' => 'home']);    
+                                
+                        }
 
-    }
+                    }
 
     /**
      * View method
@@ -114,6 +184,7 @@ class RoleventsController extends AppController
      */
     public function view($id = null)
     {
+       
         $roleid = $this->request
         ->getAttribute('identity')
         ->get('role_id');
@@ -155,10 +226,16 @@ class RoleventsController extends AppController
                                 'Roleventschannels', 
                                 'Roleventsimgs', 
                                 'Bussinessunits',
-                                'Subscriptions'],
+                                'Subscriptions'=>[
+                                    'sort' => ['Subscriptions.created' => 'DESC'],
+                                    'conditions' => [                                            
+                                            'Subscriptions.statusflag =' => 'GERADA_COM_SUCESSO',
+                                            'Subscriptions.activeflag =' => true],
+                                    ]
+                            ],
                     ]);
     
-                    $this->set(compact('rolevent','bussinessunits'));
+                    $this->set(compact('rolevent'));
     
                 } else {       
                    
@@ -182,21 +259,49 @@ class RoleventsController extends AppController
                                             ]],
                             ]);
             
-                            $this->set(compact('rolevent','bussinessunits'));
+                            $this->set(compact('rolevent'));
 
                         } else {
-                            return $this->redirect(['controller'=>'Users','action' => 'refuse']);    
+                            $this->Flash->error(__('Acesso Negado.'));
+                            return $this->redirect(['controller'=>'News','action' => 'home']);    
                         }
                 }              
                                 
             } else {
-                    
-                    return $this->redirect(['controller'=>'Users','action' => 'refuse']);
-                    
+                $this->Flash->error(__('Acesso Negado.'));
+                return $this->redirect(['controller'=>'News','action' => 'home']);    
             }
 
+                $this->set(compact('rolevent'));
+                
+                    
+            
+         
+        
+            $this->set(compact('rolevent'));
+            
+            
     }
 
+    public function viewfree($id = null)
+    {
+       
+                    $result = $this->Authentication->getResult();
+                    
+                    if ($result->isValid()) {
+                        return $this->redirect(['action' => 'view',$id]);    
+                    } else {
+                            $rolevent = $this->Rolevents->get($id, [
+                                'contain' => [
+                                        'Agendas',                                         
+                                        'Bussinessunits',
+                                                                        ]]);
+                            
+                            $this->set(compact('rolevent'));
+                    
+                    }
+            
+    }
     /**
      * Add method
      *

@@ -37,6 +37,7 @@ class Subscriptionsdoc extends Entity
         'subscription_id' => true,
         'doctype_id' => true,
         'description' => true,
+        'historic' => true,
         'filename' => true,
         'path' => true,
         'created' => true,

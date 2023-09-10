@@ -58,6 +58,10 @@ class BussinessunitsTable extends Table
         $this->hasMany('Rolevents', [
             'foreignKey' => 'bussinessunit_id',
         ]);
+
+        $this->hasMany('Singlesubscriptions', [
+            'foreignKey' => 'bussinessunit_id',
+        ]);
     }
 
     /**
