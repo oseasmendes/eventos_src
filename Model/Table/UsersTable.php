@@ -107,7 +107,10 @@ class UsersTable extends Table
         $validator
             ->scalar('mobile')
             ->maxLength('mobile', 15)
-            ->notEmptyString('mobile');
+            ->notEmptyString('mobile')
+            ->requirePresence('mobile')
+            ->notEmptyString('mobile')           
+            ->add('mobile', 'numeric', ['rule' => 'numeric','message' => 'Inserir apenas numeros']);  
         
            
         $validator

@@ -28,6 +28,7 @@ class SubscriptionsController extends AppController
           $this->loadComponent('Rlevent');
           $this->loadComponent('Peopl');
           $this->loadComponent('Staff');    
+          $this->loadComponent('Singlesubscription');
 
     }
 
@@ -181,17 +182,20 @@ class SubscriptionsController extends AppController
         if ($this->request->is('post')) {
             $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
             $subscription->rolevent_id = $id;
-            $subscription->subscriptiontype_id = 1;
+            $subscription->subscriptionstype_id = 2;
             $hoje = date("Y-m-d H:i:s");
             $subscription->dateissue = $hoje;
             //identificando o usuário logado
             $subscription->user_id = $this->request->getAttribute('identity')->getIdentifier();
             $subscription->statusflag = 'ABERTA';
             $subscription->activeflag = true;
-            $peo = $this->Peopl->findpeoplebyuserid($subscription->user_id);          
-            $subscription->people_id = $peo;     
+            $peo = $this->Peopl->findpeoplebyuserid($subscription->user_id);    
+            $usr = $this->Usr->finduserbyId($subscription->user_id);          
+            $subscription->mobile = $usr->mobile; 
+            $subscription->people_id = $peo;             
             $originid = $this->Peopl->findPeopleOriginidByUserId($subscription->user_id);
             $subscription->originid = $originid;  
+            
                        
             
 
@@ -284,13 +288,15 @@ class SubscriptionsController extends AppController
         if ($this->request->is('post')) {
             $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
             $subscription->people_id = $id;
-            $subscription->subscriptiontype_id = 1;
+            $subscription->subscriptionstype_id = 2;
             $hoje = date("Y-m-d H:i:s");
             $subscription->dateissue = $hoje;
             //identificando o usuário logado
             $subscription->user_id = $this->request->getAttribute('identity')->getIdentifier();
             $subscription->statusflag = 'ABERTA';
             $subscription->activeflag = true;
+            $usr = $this->Usr->finduserbyId($subscription->user_id);          
+            $subscription->mobile = $usr->mobile; 
             //$peo = $this->Peopl->findpeoplebyuserid($subscription->user_id);          
             //$subscription->people_id = $peo;     
             //$originid = $this->Peopl->findPeopleOriginidByUserId($subscription->user_id);
@@ -395,7 +401,7 @@ class SubscriptionsController extends AppController
         if ($this->request->is('post')) {
             $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
             $subscription->rolevent_id = $id;
-            $subscription->subscriptiontype_id = 1;
+            $subscription->subscriptionstype_id = 2;
             $hoje = date("Y-m-d H:i:s");
             $subscription->dateissue = $hoje;
             //identificando o usuário logado
@@ -406,6 +412,8 @@ class SubscriptionsController extends AppController
             $subscription->people_id = $peo;     
             $originid = $this->Peopl->findPeopleOriginidByUserId($subscription->user_id);
             $subscription->originid = $originid;  
+            $usr = $this->Usr->finduserbyId($subscription->user_id);          
+            $subscription->mobile = $usr->mobile; 
                        
             
 
@@ -550,6 +558,150 @@ class SubscriptionsController extends AppController
                             $subscriptionstypes = $this->Subscriptions->Subscriptionstypes->find('list', ['limit' => 200]);
                             $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
                             $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes'));
+                        
+                        } else {
+                            $this->Flash->error(__('Inscrição não pode ser alterada.'));
+                            return $this->redirect(['action' => 'view', $id]);
+                            
+                        }               
+
+    
+    }
+
+    public function confirmation($id = null)
+    {
+  
+          
+        $roleid = $this->request
+        ->getAttribute('identity')
+        ->get('role_id');
+
+        $profileid = $this->request
+        ->getAttribute('identity')        
+        ->get('profile_id'); 
+
+        $userid = $this->request
+        ->getAttribute('identity')        
+        ->get('id'); 
+        
+        $useractive = $this->request
+        ->getAttribute('identity')        
+        ->get('active'); 
+
+        $confirmed = $this->request
+        ->getAttribute('identity')
+        ->get('confirmed');
+        
+        $ctrl = Configure::read('ctrl._subscriptions');
+        $act = Configure::read('act._conf');
+        $ok = Configure::read('answ.alw');
+        
+       
+
+        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);
+        //var_dump($allprof);
+        //exit;
+                 
+        if (($allprof->value == $ok) && ($useractive == true) && ($confirmed == true)) {
+
+                            $subscription = $this->Subscriptions->get($id, [
+                                'contain' => [],
+                            ]);
+                            if ($this->request->is(['patch', 'post', 'put'])) {
+                                $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
+                                //$roleventid = $subscription->rolevent_id; 
+                                $subscription->mobile = $subscription->mobile;
+                               // var_dump($subscription);    
+                               // exit;
+                                if ($this->Subscriptions->save($subscription)) {
+                                    $this->Flash->success(__('The subscription has been saved.'));
+
+                                    //return $this->redirect(['action' => 'index']);
+                                    return $this->redirect(['action' => 'view', $id]);
+                                }
+                                $this->Flash->error(__('saindo aqui'));
+                            }
+
+                            $rolevents = $this->Subscriptions->Rolevents->find('list', ['limit' => 200]);
+                            $subscriptionstypes = $this->Subscriptions->Subscriptionstypes->find('list', ['limit' => 200]);
+                            $singlesubscriptions = $this->Subscriptions->Singlesubscriptions->find('list',array('conditions'=>array('Singlesubscriptions.id'=>$subscription->singlesubscription_id),'order' => array('Singlesubscriptions.id' => 'asc')));
+                            $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
+                            $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes','singlesubscriptions'));
+                        
+                        } else {
+                            $this->Flash->error(__('Inscrição não pode ser alterada.'));
+                            return $this->redirect(['action' => 'view', $id]);
+                            
+                        }               
+
+    
+    }
+
+    public function convertsub($id = null)
+    {
+  
+          
+        $roleid = $this->request
+        ->getAttribute('identity')
+        ->get('role_id');
+
+        $profileid = $this->request
+        ->getAttribute('identity')        
+        ->get('profile_id'); 
+
+        $userid = $this->request
+        ->getAttribute('identity')        
+        ->get('id'); 
+        
+        $useractive = $this->request
+        ->getAttribute('identity')        
+        ->get('active'); 
+
+        $confirmed = $this->request
+        ->getAttribute('identity')
+        ->get('confirmed');
+        
+        $ctrl = Configure::read('ctrl._subscriptions');
+        $act = Configure::read('act._conv');
+        $ok = Configure::read('answ.alw');
+        
+       
+
+        $allprof = $this->Staff->mcontrol($ctrl,$act,$profileid,$roleid);
+        //var_dump($allprof->value);
+                 
+        if (($allprof->value == $ok) && ($useractive == true) && ($confirmed == true)) {
+
+                           
+                                $subscription = $this->Subscriptions->get($id);
+                          
+                                $singlesubscription =  $this->Singlesubscription->FindSingleSubscriptionById($subscription->singlesubscription_id);       
+                                $subscription->id = $id; 
+                                $subscription->user_id = $userid; 
+                                $subscription->subscriptionstype_id = 2;
+                                $subscription->rolevent_id = $singlesubscription->rolevent_id; 
+                                $subscription->people_id = $singlesubscription->people_id; 
+                                $subscription->originid = $singlesubscription->originid; 
+                                $hoje = date("Y-m-d H:i:s");
+                                $subscription->dateissue = $hoje;                                
+                                $subscription->activeflag = true; 
+                                $subscription->paymentvalue = $singlesubscription->price; 
+                                $subscription->statusflag = "CONVERTIDA";
+                                $subscription->description = "PREINSCON-".$singlesubscription->fullname;
+
+                                if ($this->Subscriptions->save($subscription)) {
+                                    $this->Flash->success(__('The subscription has been saved.'));
+
+                                    return $this->redirect(['action' => 'view', $id]);
+                                    //return $this->redirect(['controller'=>'rolevents','action' => 'view', $roleventid]);
+                                } else {
+                                 $this->Flash->error(__('The subscription could not be saved. Please, try again.'));
+                            } 
+                            /*
+                            $rolevents = $this->Subscriptions->Rolevents->find('list', ['limit' => 200]);
+                            $subscriptionstypes = $this->Subscriptions->Subscriptionstypes->find('list', ['limit' => 200]);
+                            $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
+                            $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes')); */
                         
                         } else {
                             $this->Flash->error(__('Inscrição não pode ser alterada.'));

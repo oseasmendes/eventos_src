@@ -37,6 +37,8 @@ class Subscription extends Entity
         'subscriptionstype_id' => true,
         'user_id' => true,
         'people_id' => true,
+        'singlesubscription_id' => true,
+        'mobile' => true,
         'originid' => true,
         'controlnumber'=> true,
         'paymentvalue'=> true,
@@ -45,11 +47,13 @@ class Subscription extends Entity
         'rolevent' => true,
         'created' => true,
         'modified' => true,
+        'summary' => true,
         'user' => true,
         'subscriptionsdocs' => true,
         'peoples' => true,
         'subscriptionsconfs' => true,
         'subscriptionstypes' => true,
+        'singlesubscriptions' => true,
         'subscriptionsflows' => true,
     ];
 }

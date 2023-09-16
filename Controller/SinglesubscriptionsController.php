@@ -16,7 +16,7 @@ class SinglesubscriptionsController extends AppController
         parent::beforeFilter($event);
         // Configure the login action to not require authentication, preventing
         // the infinite redirect loop issue
-        $this->Authentication->allowUnauthenticated(['addid','view']);
+        $this->Authentication->allowUnauthenticated(['addid','view','checksubscription']);
     }
 
     public function initialize(): void
@@ -34,7 +34,11 @@ class SinglesubscriptionsController extends AppController
      *
      * @return \Cake\Http\Response|null|void Renders view
      */
-    public function index()
+    
+    
+    
+    
+     public function index()
     {
 
         
@@ -92,6 +96,60 @@ class SinglesubscriptionsController extends AppController
         $this->set(compact('singlesubscriptions', 'bussinessunits','rolevents'));
     }
 
+    public function checksubscription() {
+        $keyword = $this->request->getQueryParams('description');
+
+        if (!empty($keyword['description'])) {       
+
+                $this->paginate = [
+                    'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],
+                    'conditions' => [
+                        'Singlesubscriptions.reference LIKE '=> $keyword['description'],
+                        ],             
+                    'order' => [                        
+                    'Singlesubscriptions.fullname' => 'asc'
+                        ]            
+                ];
+
+        $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
+
+        } elseif(!empty($keyword['numeroinscricaoid'])) {    
+
+            $this->paginate = [ 
+                'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],                       
+                'conditions' => [
+                        'Singlesubscriptions.id ='=> $keyword['numeroinscricaoid'],                       
+                        ],             
+                'order' => ['Singlesubscriptions.fullname' => 'asc']            
+            ];
+
+            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
+
+
+        } else {
+
+            $this->paginate = [
+                'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],
+                'conditions' => [
+                    'Singlesubscriptions.statusflag LIKE'=> 'NO_APPLICABLE',
+                    ],             
+                'order' => [                        
+                'Singlesubscriptions.fullname' => 'asc'
+                    ]            
+            ];
+
+            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
+
+        }
+
+        $rolevents = $this->Singlesubscriptions->Rolevents->find('list', ['limit' => 200]);
+        $bussinessunits = $this->Singlesubscriptions->Bussinessunits->find('list',array('conditions'=>array('Bussinessunits.org_id'=>1),'order' => array('Bussinessunits.seq' => 'asc','Bussinessunits.description' => 'asc')));
+
+
+        $this->set(compact('singlesubscriptions', 'bussinessunits','rolevents'));
+
+    }
+
     /**
      * View method
      *
@@ -118,13 +176,16 @@ class SinglesubscriptionsController extends AppController
         $singlesubscription = $this->Singlesubscriptions->newEmptyEntity();
         if ($this->request->is('post')) {
             $singlesubscription = $this->Singlesubscriptions->patchEntity($singlesubscription, $this->request->getData());
-            
-            $eventoref = $this->Rlevent->findroleventsbyid($singlesubscription->rolevent_id);
+            $singlesubscription->rolevent_id = $singlesubscription->rolevent_id;
+            $singlesubscription->statusflag = "GERADA_COM_SUCESSO";          
+            $eventoref = $this->Rlevent->findroleventsbyid($id);
             $singlesubscription->price = $eventoref->price;
             $personref = $this->Peopl->findpeopleidbydoc($singlesubscription->documentnumber);
-            $singlesubscription->people_id = $personref;   
+            $singlesubscription->people_id = $personref;    
             $persondata = $this->Peopl->findallpeoplebypeopleid($personref);
-            $singlesubscription->originid = $persondata->originid;
+            $singlesubscription->originid = $persondata->originid;    
+            $timestamp = time();
+            $singlesubscription->reference = rand(1,50000).".".date('YmdHis', $timestamp);    
             
             if ($this->Singlesubscriptions->save($singlesubscription)) {
                 $this->Flash->success(__('Pré Inscrição Lançada com Sucesso.'));
@@ -152,6 +213,8 @@ class SinglesubscriptionsController extends AppController
             $singlesubscription->people_id = $personref;    
             $persondata = $this->Peopl->findallpeoplebypeopleid($personref);
             $singlesubscription->originid = $persondata->originid;    
+            $timestamp = time();
+            $singlesubscription->reference = rand(1,50000).".".date('YmdHis', $timestamp);    
 
             if ($this->Singlesubscriptions->save($singlesubscription)) {
                 

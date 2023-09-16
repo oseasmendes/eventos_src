@@ -56,12 +56,13 @@ class SinglesubscriptionsTable extends Table
         $this->belongsTo('Bussinessunits', [
             'foreignKey' => 'bussinessunit_id',
         ]);
-        $this->belongsTo('Subscriptions', [
-            'foreignKey' => 'subscription_id',
-        ]);
+        $this->hasOne('Subscriptions');
+
         $this->belongsTo('Peoples', [
             'foreignKey' => 'people_id',
         ]);
+
+        
     }
 
     /**
@@ -83,7 +84,13 @@ class SinglesubscriptionsTable extends Table
 
         $validator
             ->email('email')
-            ->allowEmptyString('email');
+            ->allowEmptyString('email')
+            ->requirePresence('email')
+            ->notEmptyString('email')           
+            ->add('email', 'validFormat', [
+                'rule' => 'email',
+                'message' => 'E-mail precisa ser um email válido'
+            ]);  
 
         $validator
             ->scalar('organizationname')

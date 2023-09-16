@@ -69,13 +69,12 @@ class SubscriptionsTable extends Table
             'foreignKey' => 'subscription_id',
         ]);
 
-        $this->hasMany('Singlesubscriptions', [
-            'foreignKey' => 'subscription_id',
-        ]);
-
         $this->belongsTo('Subscriptionstypes', [
             'foreignKey' => 'subscriptionstype_id',
         ]);
+
+        $this->hasOne('Singlesubscriptions');
+
     }
 
     /**
@@ -114,6 +113,22 @@ class SubscriptionsTable extends Table
             ->scalar('statusflag')
             ->maxLength('statusflag', 30)
             ->allowEmptyString('statusflag');
+
+        $validator
+            ->scalar('mobile')
+            ->maxLength('mobile', 45)
+            ->requirePresence('mobile')
+            ->notEmptyString('mobile')           
+            ->add('mobile', 'numeric', ['rule' => 'numeric','message' => 'Inserir apenas numeros']);  
+
+     /*   $validator
+            ->integer('singlesubscription_id')
+            ->allowEmptyString('singlesubscription_id');  */
+            
+        $validator
+            ->scalar('summary')
+            ->maxLength('summary', 4294967295)
+            ->allowEmptyString('summary');
 
         return $validator;
     }
