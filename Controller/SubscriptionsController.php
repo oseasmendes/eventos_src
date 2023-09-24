@@ -5,6 +5,10 @@ namespace App\Controller;
 use Cake\Mailer\MailerAwareTrait;
 use Cake\Core\Configure;
 use Cake\Validation\Validator;
+use Cake\ORM\Table;
+use Cake\ORM\TableRegistry;
+use Cake\ORM\Locator\LocatorInterface;
+use Cake\ORM\Query;
 /**
  * Subscriptions Controller
  *
@@ -14,6 +18,11 @@ use Cake\Validation\Validator;
 class SubscriptionsController extends AppController
 {
 
+    public function beforeFilter(\Cake\Event\EventInterface $event)
+    {
+        parent::beforeFilter($event);    
+        $this->Authentication->allowUnauthenticated(['viewfree']);
+    }
    
 
     public function initialize(): void
@@ -29,7 +38,7 @@ class SubscriptionsController extends AppController
           $this->loadComponent('Peopl');
           $this->loadComponent('Staff');    
           $this->loadComponent('Singlesubscription');
-
+          $this->loadModel('Singlesubscriptions');
     }
 
 
@@ -47,7 +56,7 @@ class SubscriptionsController extends AppController
         if ($roleid == 1) {
 
                 $this->paginate = [
-                    'contain' => ['Rolevents', 'Users'],
+                    'contain' => ['Rolevents', 'Users','Singlesubscriptions'],
                 ];
                 $subscriptions = $this->paginate($this->Subscriptions);
 
@@ -57,7 +66,7 @@ class SubscriptionsController extends AppController
         } else {
 
                 $this->paginate = [
-                    'contain' => ['Rolevents', 'Users'],                         
+                    'contain' => ['Rolevents', 'Users','Singlesubscriptions'],                         
                     'conditions' => ['user_id ='=>$userid],       
                     'order' => ['Subscriptions.dateissue' => 'desc']
                 ];
@@ -148,6 +157,25 @@ class SubscriptionsController extends AppController
         }        
     }
 
+    public function viewfree($id = null)
+    {
+        
+                    
+                                $subscription = $this->Subscriptions->get($id, [
+                                    'contain' => [
+                                                'Rolevents', 
+                                                'Users', 
+                                                'Subscriptionsdocs', 
+                                                'Subscriptionsflows'],
+                                ]);
+
+                                $this->set(compact('subscription'));
+                    
+
+                        
+          
+    }
+
     /**
      * Add method
      *
@@ -155,7 +183,7 @@ class SubscriptionsController extends AppController
      */
     public function add()
     {
-       
+                $dataatual = date('Y-m-d H:i:s');
                 $subscription = $this->Subscriptions->newEmptyEntity();
                 if ($this->request->is('post')) {
                     $subscription = $this->Subscriptions->patchEntity($subscription, $this->request->getData());
@@ -166,7 +194,13 @@ class SubscriptionsController extends AppController
                     }
                     $this->Flash->error(__('The subscription could not be saved. Please, try again.'));
                 }
-                $rolevents = $this->Subscriptions->Rolevents->find('list', ['limit' => 200]);
+                $rolevents = $this->Subscriptions->Rolevents->find('list',array(
+                                                                            'conditions'=>array(
+                                                                                'Rolevents.activeflag is '=>true,
+                                                                                'Rolevents.subscriptionrequired is '=>true,
+                                                                                'Rolevents.subscexpirationdate >= '=>$dataatual,
+                                                                                )
+                                                                        ));
                 $subscriptionstypes = $this->Subscriptions->Subscriptionstypes->find('list', ['limit' => 200]);
                 $users = $this->Subscriptions->Users->find('list', ['limit' => 200]);
                 $this->set(compact('subscription', 'rolevents', 'users','subscriptionstypes'));
@@ -690,6 +724,19 @@ class SubscriptionsController extends AppController
                                 $subscription->description = "PREINSCON-".$singlesubscription->fullname;
 
                                 if ($this->Subscriptions->save($subscription)) {
+
+                                    $query = $this->Singlesubscriptions->find('all', [
+                                        'conditions' => ['Singlesubscriptions.id' => $subscription->singlesubscription_id],  
+                                    ]);
+                                    $row = $query->first();
+                                                                        
+                                    $preinscricaoTable = TableRegistry::getTableLocator()->get('Singlesubscriptions');
+                                    $preinscricao = $preinscricaoTable->get($row->id);
+                                    $preinscricao->subscription_id = $subscription->id;
+                                    $preinscricao->statusflag = 'INSCRICAO_CONVERTIDA';
+                    
+                                    $this->Singlesubscriptions->save($preinscricao);
+
                                     $this->Flash->success(__('The subscription has been saved.'));
 
                                     return $this->redirect(['action' => 'view', $id]);

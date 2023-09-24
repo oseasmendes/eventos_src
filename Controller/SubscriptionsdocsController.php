@@ -142,7 +142,8 @@ class SubscriptionsdocsController extends AppController
        
                     $this->SubscrDoc->upload($this->request->getData('image'),$id,$subscriptionsdoc->description,$subscriptionsdoc->doctype_id,$fullhash);    
         
-                        return $this->redirect(['controller'=>'rolevents','action' => 'view',$roleventid]);
+                        //return $this->redirect(['controller'=>'rolevents','action' => 'view',$roleventid]);
+                        return $this->redirect(['controller'=>'subscriptions','action' => 'view',$subscriptionsdoc->subscription_id]);
         
                 } else {
                     $this->Flash->error(__('Não foi selecionado nenhuma imagem, ou não foi encontrado inscrição anexada, ou Tipo Documento não informado. Verifique.'));

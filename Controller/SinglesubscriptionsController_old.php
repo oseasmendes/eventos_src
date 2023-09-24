@@ -2,10 +2,6 @@
 declare(strict_types=1);
 
 namespace App\Controller;
-use Cake\ORM\Table;
-use Cake\ORM\TableRegistry;
-use Cake\ORM\Locator\LocatorInterface;
-use Cake\ORM\Query;
 
 /**
  * Singlesubscriptions Controller
@@ -38,7 +34,11 @@ class SinglesubscriptionsController extends AppController
      *
      * @return \Cake\Http\Response|null|void Renders view
      */
-    public function index()
+    
+    
+    
+    
+     public function index()
     {
 
         
@@ -46,7 +46,7 @@ class SinglesubscriptionsController extends AppController
         
         $keyword = $this->request->getQueryParams('description');
 
-       
+
         if (!empty($keyword['description'])) {       
             
             $this->paginate = [
@@ -59,12 +59,9 @@ class SinglesubscriptionsController extends AppController
                     ]            
             ];
 
-            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
-            $geradas = $this->Singlesubscriptions->find()->where([               
-                'Singlesubscriptions.fullname LIKE'=> '%'.$keyword['description'].'%' 
-                ])->count();
+           // $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
 
-        } elseif(!empty($keyword['bussinessunit_id']) AND (empty($keyword['statusf']))) {    
+        } elseif(!empty($keyword['bussinessunit_id'])) {    
 
             $this->paginate = [ 
                 'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],                       
@@ -74,12 +71,9 @@ class SinglesubscriptionsController extends AppController
                 'order' => ['Singlesubscriptions.fullname' => 'asc']            
             ];
 
-            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
-            $geradas = $this->Singlesubscriptions->find()->where([               
-                'Singlesubscriptions.bussinessunit_id = ' => $keyword['bussinessunit_id'] 
-                ])->count();
-
-        } elseif(empty($keyword['bussinessunit_id']) AND (!empty($keyword['statusf']))) {    
+            //$singlesubscriptions = $this->paginate($this->Singlesubscriptions);
+        
+        } elseif(!empty($keyword['statusf'])) {    
 
             $this->paginate = [ 
                 'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],                       
@@ -89,33 +83,67 @@ class SinglesubscriptionsController extends AppController
                 'order' => ['Singlesubscriptions.fullname' => 'asc']            
             ];
 
-            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);   
-            $geradas = $this->Singlesubscriptions->find()->where(['Singlesubscriptions.statusflag LIKE ' => ''.$keyword['statusf'].''])->count();
+            //$singlesubscriptions = $this->paginate($this->Singlesubscriptions);   
 
-        } elseif((!empty($keyword['bussinessunit_id'])) AND (!empty($keyword['statusf']))) {    
 
-            $this->paginate = [ 
-                'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],                       
-                'conditions' => [
-                        'Singlesubscriptions.statusflag LIKE '=> ''.$keyword['statusf'].'', 
-                        'Singlesubscriptions.bussinessunit_id ='=> $keyword['bussinessunit_id']                      
-                        ],             
-                'order' => ['Singlesubscriptions.fullname' => 'asc']            
-            ];
-
-            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);   
-           
-            $geradas = $this->Singlesubscriptions->find()->where([
-                                                                    'Singlesubscriptions.statusflag LIKE ' => ''.$keyword['statusf'].'',
-                                                                    'Singlesubscriptions.bussinessunit_id = ' => $keyword['bussinessunit_id'] 
-                                                                    ])->count();
-               
         } else {
 
             $this->paginate = [
                 'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],
                 'conditions' => [
-                   // 'Singlesubscriptions.statusflag LIKE'=> 'GERADA_COM_SUCESSO',
+                    //'Singlesubscriptions.statusflag LIKE'=> 'GERADA_COM_SUCESSO',
+                    ],             
+                'order' => [                        
+                'Singlesubscriptions.fullname' => 'asc'
+                    ]            
+            ];
+
+            //$singlesubscriptions = $this->paginate($this->Singlesubscriptions);
+        }
+        
+        $rolevents = $this->Singlesubscriptions->Rolevents->find('list', ['limit' => 200]);
+        $bussinessunits = $this->Singlesubscriptions->Bussinessunits->find('list',array('conditions'=>array('Bussinessunits.org_id'=>1),'order' => array('Bussinessunits.seq' => 'asc','Bussinessunits.description' => 'asc')));
+
+        $singlesubscriptions = $this->paginate($this->Singlesubscriptions);   
+        $this->set(compact('singlesubscriptions', 'bussinessunits','rolevents'));
+    }
+
+    public function checksubscription() {
+        $keyword = $this->request->getQueryParams('description');
+
+        if (!empty($keyword['description'])) {       
+
+                $this->paginate = [
+                    'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],
+                    'conditions' => [
+                        'Singlesubscriptions.reference LIKE '=> $keyword['description'],
+                        ],             
+                    'order' => [                        
+                    'Singlesubscriptions.fullname' => 'asc'
+                        ]            
+                ];
+
+        $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
+
+        } elseif(!empty($keyword['numeroinscricaoid'])) {    
+
+            $this->paginate = [ 
+                'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],                       
+                'conditions' => [
+                        'Singlesubscriptions.id ='=> $keyword['numeroinscricaoid'],                       
+                        ],             
+                'order' => ['Singlesubscriptions.fullname' => 'asc']            
+            ];
+
+            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
+
+
+        } else {
+
+            $this->paginate = [
+                'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],
+                'conditions' => [
+                    'Singlesubscriptions.statusflag LIKE'=> 'NO_APPLICABLE',
                     ],             
                 'order' => [                        
                 'Singlesubscriptions.fullname' => 'asc'
@@ -123,17 +151,15 @@ class SinglesubscriptionsController extends AppController
             ];
 
             $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
-            
-            $geradas = $this->Singlesubscriptions->find()->count();
-           
 
         }
-        
+
         $rolevents = $this->Singlesubscriptions->Rolevents->find('list', ['limit' => 200]);
         $bussinessunits = $this->Singlesubscriptions->Bussinessunits->find('list',array('conditions'=>array('Bussinessunits.org_id'=>1),'order' => array('Bussinessunits.seq' => 'asc','Bussinessunits.description' => 'asc')));
 
 
-        $this->set(compact('singlesubscriptions', 'bussinessunits','rolevents','geradas'));
+        $this->set(compact('singlesubscriptions', 'bussinessunits','rolevents'));
+
     }
 
     /**
@@ -146,7 +172,7 @@ class SinglesubscriptionsController extends AppController
     public function view($id = null)
     {
         $singlesubscription = $this->Singlesubscriptions->get($id, [
-            'contain' => ['Rolevents', 'Bussinessunits','Subscriptions'],
+            'contain' => ['Rolevents', 'Bussinessunits'],
         ]);
 
         $this->set(compact('singlesubscription'));
@@ -159,17 +185,17 @@ class SinglesubscriptionsController extends AppController
      */
     public function add()
     {
-        $dataatual = date('Y-m-d H:i:s');
         $singlesubscription = $this->Singlesubscriptions->newEmptyEntity();
         if ($this->request->is('post')) {
             $singlesubscription = $this->Singlesubscriptions->patchEntity($singlesubscription, $this->request->getData());
-            
-            $eventoref = $this->Rlevent->findroleventsbyid($singlesubscription->rolevent_id);
+            $singlesubscription->rolevent_id = $singlesubscription->rolevent_id;
+            $singlesubscription->statusflag = "GERADA_COM_SUCESSO";          
+            $eventoref = $this->Rlevent->findroleventsbyid($id);
             $singlesubscription->price = $eventoref->price;
             $personref = $this->Peopl->findpeopleidbydoc($singlesubscription->documentnumber);
-            $singlesubscription->people_id = $personref;   
+            $singlesubscription->people_id = $personref;    
             $persondata = $this->Peopl->findallpeoplebypeopleid($personref);
-            $singlesubscription->originid = $persondata->originid;
+            $singlesubscription->originid = $persondata->originid;    
             $timestamp = time();
             $singlesubscription->reference = rand(1,50000).".".date('YmdHis', $timestamp);    
             
@@ -180,13 +206,7 @@ class SinglesubscriptionsController extends AppController
             }
             $this->Flash->error(__('Pré Inscrição não pode ser salva. Tente novamente.'));
         }
-        $rolevents = $this->Singlesubscriptions->Rolevents->find('list',array(
-                                                                        'conditions'=>array(
-                                                                            'Rolevents.activeflag is '=>true,
-                                                                            'Rolevents.subscriptionrequired is '=>true,
-                                                                            'Rolevents.subscexpirationdate >= '=>$dataatual,
-                                                                            )
-                                                                    ));
+        $rolevents = $this->Singlesubscriptions->Rolevents->find('list', ['limit' => 200]);
         $bussinessunits = $this->Singlesubscriptions->Bussinessunits->find('list', ['limit' => 200]);       
        
         $this->set(compact('singlesubscription', 'rolevents', 'bussinessunits'));
@@ -237,18 +257,6 @@ class SinglesubscriptionsController extends AppController
             $singlesubscription = $this->Singlesubscriptions->patchEntity($singlesubscription, $this->request->getData());
             $eventoref = $this->Rlevent->findroleventsbyid($singlesubscription->rolevent_id);
             $singlesubscription->price = $eventoref->price;
-            if (empty($singlesubscription->reference)) {
-                $timestamp = time();
-                $singlesubscription->reference = rand(1,50000).".".date('YmdHis', $timestamp);    
-            }
-            if (!empty($singlesubscription->documentnumber)) {
-            $personref = $this->Peopl->findpeopleidbydoc($singlesubscription->documentnumber);
-            $singlesubscription->people_id = $personref;    
-            $persondata = $this->Peopl->findallpeoplebypeopleid($personref);
-            $singlesubscription->originid = $persondata->originid;    
-            }
-
-
             if ($this->Singlesubscriptions->save($singlesubscription)) {
                 $this->Flash->success(__('Pré Inscrição Registrada com sucesso.'));
 
@@ -259,7 +267,7 @@ class SinglesubscriptionsController extends AppController
         $rolevents = $this->Singlesubscriptions->Rolevents->find('list', ['limit' => 200]);
         $bussinessunits = $this->Singlesubscriptions->Bussinessunits->find('list', ['limit' => 200]);
         $subscriptions = $this->Singlesubscriptions->Subscriptions->find('list', ['limit' => 200]);
-        $people = $this->Singlesubscriptions->Peoples->find('list', ['limit' => 200]);
+        $people = $this->Singlesubscriptions->People->find('list', ['limit' => 200]);
         $this->set(compact('singlesubscription', 'rolevents', 'bussinessunits', 'subscriptions', 'people'));
     }
 
@@ -281,72 +289,5 @@ class SinglesubscriptionsController extends AppController
         }
 
         return $this->redirect(['action' => 'index']);
-    }
-
-    public function rptgerada() {
-        /* $query = $this->Singlesubscriptions->find('all', [
-            'conditions' => ['Singlesubscriptions.statusflag like ' => 'GERADA_COM_SUCESSO' ],
-        ]); */
-        $query = $this->Singlesubscriptions->find();
-        $query->select([
-            'bussinessunit_id' => 'bussinessunit_id',
-            'count' => $query->func()->count('Singlesubscriptions.id'),            
-        ])
-        ->where(['Singlesubscriptions.statusflag' => 'GERADA_COM_SUCESSO'])
-        ->group(['bussinessunit_id']);
-       // $query->orderDesc($query);
-        //->having(['count >' => 3]);
-
-      //  $summary = $query;
-        //exit;
-        //$preinscrGerada = $query->count();
-
-       // $this->set(compact("summary"));
-
-       $this->set('singlesubscription',$this->paginate($query));
-
-        //$this->set("title","Eventos");
-    }
-   
-    public function checksubscription() {
-        $keyword = $this->request->getQueryParams('description');
-
-        if (!empty($keyword['description'])) {       
-
-                $this->paginate = [
-                    'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],
-                    'conditions' => [
-                        'Singlesubscriptions.reference LIKE '=> $keyword['description'],
-                        ],             
-                    'order' => [                        
-                    'Singlesubscriptions.fullname' => 'asc'
-                        ]            
-                ];
-
-        $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
-   
-
-        } else {
-
-            $this->paginate = [
-                'contain' => ['Rolevents', 'Bussinessunits', 'Subscriptions', 'Peoples'],
-                'conditions' => [
-                    'Singlesubscriptions.statusflag LIKE'=> 'NO_APPLICABLE',
-                    ],             
-                'order' => [                        
-                'Singlesubscriptions.fullname' => 'asc'
-                    ]            
-            ];
-
-            $singlesubscriptions = $this->paginate($this->Singlesubscriptions);
-
-        }
-
-        $rolevents = $this->Singlesubscriptions->Rolevents->find('list', ['limit' => 200]);
-        $bussinessunits = $this->Singlesubscriptions->Bussinessunits->find('list',array('conditions'=>array('Bussinessunits.org_id'=>1),'order' => array('Bussinessunits.seq' => 'asc','Bussinessunits.description' => 'asc')));
-
-
-        $this->set(compact('singlesubscriptions', 'bussinessunits','rolevents'));
-
     }
 }
